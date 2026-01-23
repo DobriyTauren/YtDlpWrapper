@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "YtDlpWrapper (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "YtDlpWrapper (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
