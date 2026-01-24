@@ -82,7 +82,7 @@
                     <!-- URL -->
                     <TextBox
                     PlaceholderText="Вставьте ссылку на видео"
-                    Text="{Binding Current.Url, Mode=TwoWay}"
+                    Text="{Binding CurrentDownload.Url, Mode=TwoWay}"
                     Height="44"/>
 
                     <Grid ColumnSpacing="12">
@@ -134,7 +134,7 @@
                         HorizontalAlignment="Stretch"
                         Style="{ThemeResource AccentButtonStyle}"
                         Command="{Binding DownloadCommand}"
-                        Visibility="{Binding Current.IsDownloading,
+                        Visibility="{Binding CurrentDownload.IsDownloading,
                         Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
 
                     <!-- CANCEL -->
@@ -145,7 +145,7 @@
                         HorizontalAlignment="Stretch"
                         Style="{ThemeResource AccentButtonStyle}"
                         Command="{Binding CancelCommand}"
-                        Visibility="{Binding Current.IsDownloading,
+                        Visibility="{Binding CurrentDownload.IsDownloading,
                         Converter={StaticResource BoolToVisibilityConverter}}"/>
 
                     <Grid>
@@ -158,14 +158,14 @@
                             Grid.Column="0"
                             Minimum="0"
                             Maximum="100"
-                            Value="{Binding Current.Progress}"
+                            Value="{Binding CurrentDownload.Progress}"
                             MinHeight="12"
                             HorizontalAlignment="Stretch"
                             VerticalAlignment="Center"/>
 
                         <TextBlock
                             Grid.Column="1"
-                            Text="{Binding Current.Status}"
+                            Text="{Binding CurrentDownload.Status}"
                             Opacity="0.7"
                             FontSize="12"
                             Margin="8,0,0,0"

@@ -21,7 +21,7 @@ namespace YtDlpWrapper.ViewModels
 
         public event Action<string> DownloadFailed;
 
-        public DownloadItem Current { get; } = new();
+        public DownloadItem CurrentDownload { get; } = new();
 
         public ICommand DownloadCommand { get; }
         public ICommand CancelCommand { get; }
@@ -123,20 +123,14 @@ namespace YtDlpWrapper.ViewModels
         {
             _cts?.Cancel();
 
-            Current.Status = "Отменено";
-            Current.IsDownloading = false;
-            Current.Progress = 0;
+            CurrentDownload.Status = "Отменено";
+            CurrentDownload.IsDownloading = false;
+            CurrentDownload.Progress = 0;
         }
 
         private async void StartDownload()
         {
-            _cts = new CancellationTokenSource();
-
-            Current.Progress = 0;
-            Current.Status = "Подготовка…";
-            Current.IsDownloading = true;
-
-            var cleanUrl = Current.Url?.Trim();
+            var cleanUrl = CurrentDownload.Url?.Trim();
 
             if (string.IsNullOrWhiteSpace(cleanUrl))
             {
@@ -150,6 +144,12 @@ namespace YtDlpWrapper.ViewModels
                 return;
             }
 
+            _cts = new CancellationTokenSource();
+
+            CurrentDownload.Progress = 0;
+            CurrentDownload.Status = "Подготовка…";
+            CurrentDownload.IsDownloading = true;
+
             try
             {
                 await _ytDlp.DownloadAsync(cleanUrl,
@@ -162,8 +162,8 @@ namespace YtDlpWrapper.ViewModels
                         // ⚠️ UI thread
                         App.MainWindow.DispatcherQueue.TryEnqueue(() =>
                         {
-                            Current.Progress = progress.Percent;
-                            Current.Status = $"Загрузка… {progress.Percent:0.0}%";
+                            CurrentDownload.Progress = progress.Percent;
+                            CurrentDownload.Status = $"Загрузка… {progress.Percent:0.0}%";
                         });
                     },
                     _cts.Token);
@@ -173,9 +173,9 @@ namespace YtDlpWrapper.ViewModels
 
                 App.MainWindow.DispatcherQueue.TryEnqueue(() =>
                 {
-                    Current.Progress = 100;
-                    Current.Status = "Готово";
-                    Current.IsDownloading = false;
+                    CurrentDownload.Progress = 100;
+                    CurrentDownload.Status = "Готово";
+                    CurrentDownload.IsDownloading = false;
                 });
             }
             catch (OperationCanceledException)
@@ -184,12 +184,12 @@ namespace YtDlpWrapper.ViewModels
             }
             catch (System.Exception ex)
             {
-                Current.Status = "Ошибка";
+                CurrentDownload.Status = "Ошибка";
                 DownloadFailed?.Invoke(ex.Message);
             }
             finally
             {
-                Current.IsDownloading = false;
+                CurrentDownload.IsDownloading = false;
             }
         }
 
