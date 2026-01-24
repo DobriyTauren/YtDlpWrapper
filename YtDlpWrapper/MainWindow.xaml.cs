@@ -40,16 +40,14 @@ namespace YtDlpWrapper
                 options.Width,
                 options.Height));
 
+            _appWindow.SetPresenter(AppWindowPresenterKind.Overlapped);
+
             if (_appWindow.Presenter is OverlappedPresenter presenter)
             {
-                //presenter.PreferredMinimumWidth = options.MinWidth;
-                //presenter.PreferredMinimumHeight = options.MinHeight;
+                presenter.PreferredMinimumWidth = options.MinWidth;
+                presenter.PreferredMinimumHeight = options.MinHeight;
 
-                presenter.IsResizable = false;
-                presenter.IsMaximizable = false;
             }
-
-            _appWindow.SetPresenter(AppWindowPresenterKind.Default);
 
             if (_appWindow.TitleBar != null)
             {

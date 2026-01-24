@@ -6,9 +6,9 @@
         <Grid Padding="32, 0, 32, 32">
             <StackPanel
                 Spacing="24"
-                MaxWidth="600"
-                Width="520"
-                HorizontalAlignment="Left">
+                Width="auto"
+                MaxWidth="550"
+                HorizontalAlignment="Stretch">
                 
                 <!-- CARD: Download folder -->
                 <Border

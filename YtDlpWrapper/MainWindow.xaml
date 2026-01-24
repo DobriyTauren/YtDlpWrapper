@@ -14,19 +14,17 @@
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <!-- Рабочая область -->
         <ScrollViewer>
             <StackPanel Orientation="Vertical">
                 
                 <Frame
-                 x:Name="DownloadFrame"
-                 MaxWidth="600"
-                 HorizontalAlignment="Left"/>
+                     x:Name="DownloadFrame"
+                     HorizontalAlignment="Stretch"/>
 
                 <Frame
-                 x:Name="SettingsFrame"
-                 MaxWidth="600"
-                 HorizontalAlignment="Left"/>
+                     x:Name="SettingsFrame"
+
+                     HorizontalAlignment="Stretch"/>
 
             </StackPanel>
         </ScrollViewer>

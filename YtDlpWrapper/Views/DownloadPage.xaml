@@ -20,7 +20,8 @@
 
         <Style x:Key="ToggleButtonStyle" TargetType="Button">
             <Setter Property="Height" Value="40"/>
-            <Setter Property="Width" Value="230"/>
+            <Setter Property="Width" Value="auto"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
             <Setter Property="CornerRadius" Value="10"/>
 
             <Setter Property="Template">
@@ -71,8 +72,9 @@
             Background="{ThemeResource CardBackgroundFillColorDefault}"
             CornerRadius="20"
             Padding="24"
-            Width="520"
-            HorizontalAlignment="Left"
+            Width="auto"
+            MaxWidth="550"
+            HorizontalAlignment="Stretch"
             VerticalAlignment="Top">
 
                 <StackPanel Spacing="20">
@@ -83,21 +85,25 @@
                     Text="{Binding Current.Url, Mode=TwoWay}"
                     Height="44"/>
 
-                    <!-- TYPE SWITCH -->
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="12">
+                    <Grid ColumnSpacing="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
 
-                        <!-- Видео -->
-                        <Button Content="🎬 Видео"
+                        <Button Grid.Column="0"
+                            Content="🎬 Видео"
                             Style="{StaticResource ToggleButtonStyle}"
                             Command="{Binding VideoButtonCommand}"
                             Background="{Binding IsVideo, Converter={StaticResource BoolToBrushConverter}}"/>
 
-                        <Button Content="🎵 Аудио"
+                        <Button Grid.Column="1"
+                            Content="🎵 Аудио"
                             Style="{StaticResource ToggleButtonStyle}"
                             Command="{Binding AudioButtonCommand}"
                             Background="{Binding IsVideo, Converter={StaticResource InverseBoolToBrushConverter}}"/>
+                    </Grid>
 
-                    </StackPanel>
 
                     <!-- OPTIONS -->
                     <Grid ColumnSpacing="12">
