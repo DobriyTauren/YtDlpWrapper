@@ -1,4 +1,6 @@
-﻿namespace YtDlpWrapper.Models
+﻿using System.ComponentModel;
+
+namespace YtDlpWrapper.Models
 {
     public enum DownloadType
     {
@@ -7,12 +9,12 @@
     }
 
     public enum VideoQuality
-    {
-        Best,
-        Q2160p,
-        Q1440p,
-        Q1080p,
-        Q720p,
-        Q480p
+    { 
+        [Description("Лучшее")] Best, 
+        [Description("2160p")] Q2160p, 
+        [Description("1440p")] Q1440p, 
+        [Description("1080p")] Q1080p, 
+        [Description("720p")] Q720p, 
+        [Description("480p")] Q480p 
     }
 }

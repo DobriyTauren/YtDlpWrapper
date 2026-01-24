@@ -150,6 +150,11 @@ namespace YtDlpWrapper.Utils
                 "--no-playlist"
             };
 
+            if (url.Contains("youtube.com") || url.Contains("youtu.be"))
+            {
+                args.Add("--extractor-args \"youtube:player_client=default\"");            
+            }
+
             if (type == DownloadType.Audio)
             {
                 args.Add("-x");

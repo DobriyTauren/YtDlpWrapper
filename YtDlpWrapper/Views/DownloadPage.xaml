@@ -5,6 +5,7 @@
 
 
     <Page.Resources>
+        <conv:EnumDescriptionConverter x:Key="EnumDescriptionConverter"/>
         <conv:BoolToBrushConverter x:Key="BoolToBrushConverter"
                                    TrueBrush="#db9ee4"
                                    FalseBrush="Transparent"/>
@@ -118,12 +119,19 @@
                             SelectedItem="{Binding Format, Mode=TwoWay}"
                             Grid.Column="0"/>
 
-                        <ComboBox
-                            Header="Качество"
-                            ItemsSource="{Binding VideoQualities}"
-                            SelectedItem="{Binding VideoQuality, Mode=TwoWay}"
-                            Grid.Column="1"
-                            Visibility="{Binding IsVideo, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                        <ComboBox 
+                            Header="Качество" 
+                            ItemsSource="{Binding VideoQualities}" 
+                            SelectedItem="{Binding VideoQuality, Mode=TwoWay}" 
+                            Visibility="{Binding IsVideo, Converter={StaticResource BoolToVisibilityConverter}}"
+                            Grid.Column="1">
+                            
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Converter={StaticResource EnumDescriptionConverter}}"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
                     </Grid>
 
                     <!-- DOWNLOAD -->
@@ -158,7 +166,7 @@
                             Grid.Column="0"
                             Minimum="0"
                             Maximum="100"
-                            Value="{Binding CurrentDownload.Progress}"
+                            Value="{Binding CurrentDownload.Progress, Mode=TwoWay}"
                             MinHeight="12"
                             HorizontalAlignment="Stretch"
                             VerticalAlignment="Center"/>
