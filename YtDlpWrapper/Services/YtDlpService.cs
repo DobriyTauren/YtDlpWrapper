@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,7 +13,6 @@ namespace YtDlpWrapper.Utils
     public class YtDlpService
     {
         private Process _currentProcess;
-        private string _currentOutputFile;
 
         public async Task DownloadAsync(string url, DownloadType downloadType, string format, VideoQuality quality,
             string outputFolder, Action<YtDlpProgress> onProgress, CancellationToken cancellationToken = default)
@@ -64,8 +64,6 @@ namespace YtDlpWrapper.Utils
                     {
                         var line = await _currentProcess.StandardOutput.ReadLineAsync();
 
-                        TryExtractOutputPath(line);
-
                         var progress = YtDlpProgressParser.Parse(line);
                         if (progress != null)
                             onProgress(progress);
@@ -98,14 +96,12 @@ namespace YtDlpWrapper.Utils
                 }
                 catch { }
 
-                if (cancellationToken.IsCancellationRequested && !string.IsNullOrWhiteSpace(_currentOutputFile))
+                if (cancellationToken.IsCancellationRequested)
                 {
-                    TryDelete(_currentOutputFile);
-                    TryDelete(_currentOutputFile + ".part");
+                    TryDelete(outputFolder);
                 }
 
                 _currentProcess = null;
-                _currentOutputFile = null;
             }
 
         }
@@ -114,32 +110,24 @@ namespace YtDlpWrapper.Utils
         {
             try
             {
-                if (File.Exists(path))
-                    File.Delete(path);
-            }
-            catch { }
-        }
+                var files = Directory.GetFiles(path).ToList();
+                var fileExtension = "";
 
-        private void TryExtractOutputPath(string line)
-        {
-            const string dest = "Destination:";
-            const string merge = "Merging formats into";
+                foreach (var file in files)
+                {
+                    fileExtension = file.Substring(file.LastIndexOf('.'));
 
-            if (line.Contains(dest))
-            {
-                _currentOutputFile = line
-                    .Substring(line.IndexOf(dest) + dest.Length)
-                    .Trim();
+                    if (fileExtension == ".part")
+                    {
+                        File.Delete(file);
+                    }
+                }               
             }
-            else if (line.Contains(merge))
+            catch (Exception e)
             {
-                var start = line.IndexOf('"') + 1;
-                var end = line.LastIndexOf('"');
-                if (start > 0 && end > start)
-                    _currentOutputFile = line[start..end];
+                throw new Exception(e.Message);
             }
         }
-
 
         private string BuildArguments(string url, DownloadType type, string format, VideoQuality quality, string outputFolder)
         {
