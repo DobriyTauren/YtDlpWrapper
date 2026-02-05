@@ -140,7 +140,7 @@ namespace YtDlpWrapper.Utils
 
             if (url.Contains("youtube.com") || url.Contains("youtu.be"))
             {
-                args.Add("--extractor-args \"youtube:player_client=default\"");            
+                args.Add("--extractor-args \"youtube:player-client=tv_embedded\"");            
             }
 
             if (type == DownloadType.Audio)
