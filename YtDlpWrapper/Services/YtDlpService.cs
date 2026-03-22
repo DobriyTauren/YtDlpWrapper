@@ -15,10 +15,13 @@ namespace YtDlpWrapper.Utils
         private Process _currentProcess;
 
         public async Task DownloadAsync(string url, DownloadType downloadType, string format, VideoQuality quality,
-            string outputFolder, Action<YtDlpProgress> onProgress, CancellationToken cancellationToken = default)
+            bool downloadPlaylist, string outputFolder, Action<DownloadProgressInfo> onProgress,
+            CancellationToken cancellationToken = default)
         {
             var appFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             var ytDlpPath = Path.Combine(appFolder, "yt-dlp", "yt-dlp.exe");
+            var progressTracker = new YtDlpProgressTracker();
+            var existingPartFiles = CapturePartFiles(outputFolder);
 
             if (!File.Exists(ytDlpPath))
                 throw new FileNotFoundException("yt-dlp.exe не найден");
@@ -28,6 +31,7 @@ namespace YtDlpWrapper.Utils
                 downloadType,
                 format,
                 quality,
+                downloadPlaylist,
                 outputFolder
             );
 
@@ -64,7 +68,7 @@ namespace YtDlpWrapper.Utils
                     {
                         var line = await _currentProcess.StandardOutput.ReadLineAsync();
 
-                        var progress = YtDlpProgressParser.Parse(line);
+                        var progress = progressTracker.Parse(line);
                         if (progress != null)
                             onProgress(progress);
                     }
@@ -98,7 +102,7 @@ namespace YtDlpWrapper.Utils
 
                 if (cancellationToken.IsCancellationRequested)
                 {
-                    TryDelete(outputFolder);
+                    TryDeleteCreatedPartFiles(outputFolder, existingPartFiles);
                 }
 
                 _currentProcess = null;
@@ -106,22 +110,46 @@ namespace YtDlpWrapper.Utils
 
         }
 
-        private void TryDelete(string path)
+        private HashSet<string> CapturePartFiles(string path)
+        {
+            var existingFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            try
+            {
+                if (string.IsNullOrWhiteSpace(path) || !Directory.Exists(path))
+                {
+                    return existingFiles;
+                }
+
+                foreach (var file in Directory.GetFiles(path, "*.part"))
+                {
+                    existingFiles.Add(file);
+                }
+            }
+            catch
+            {
+                // Не мешаем основному сценарию загрузки, если не удалось снять снимок директории.
+            }
+
+            return existingFiles;
+        }
+
+        private void TryDeleteCreatedPartFiles(string path, HashSet<string> existingPartFiles)
         {
             try
             {
-                var files = Directory.GetFiles(path).ToList();
-                var fileExtension = "";
-
-                foreach (var file in files)
+                if (string.IsNullOrWhiteSpace(path) || !Directory.Exists(path))
                 {
-                    fileExtension = file.Substring(file.LastIndexOf('.'));
+                    return;
+                }
 
-                    if (fileExtension == ".part")
+                foreach (var file in Directory.GetFiles(path, "*.part"))
+                {
+                    if (!existingPartFiles.Contains(file))
                     {
                         File.Delete(file);
                     }
-                }               
+                }
             }
             catch (Exception e)
             {
@@ -129,13 +157,13 @@ namespace YtDlpWrapper.Utils
             }
         }
 
-        private string BuildArguments(string url, DownloadType type, string format, VideoQuality quality, string outputFolder)
+        private string BuildArguments(string url, DownloadType type, string format, VideoQuality quality, bool downloadPlaylist, string outputFolder)
         {
             var args = new List<string>
             {
                 $"\"{url}\"",
                 "--newline",
-                "--no-playlist"
+                downloadPlaylist ? "--yes-playlist" : "--no-playlist"
             };
 
             if (url.Contains("youtube.com") || url.Contains("youtu.be"))

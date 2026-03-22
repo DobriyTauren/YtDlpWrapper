@@ -15,6 +15,7 @@ namespace YtDlpWrapper.ViewModels
         private readonly SettingsService _settingsService;
 
         private CancellationTokenSource _cts;
+        private int _downloadOperationId;
 
         private double _progress;
         private int _selectedTypeIndex;
@@ -121,6 +122,7 @@ namespace YtDlpWrapper.ViewModels
 
         private void CancelDownload()
         {
+            Interlocked.Increment(ref _downloadOperationId);
             _cts?.Cancel();
 
             CurrentDownload.Status = "Отменено";
@@ -144,7 +146,10 @@ namespace YtDlpWrapper.ViewModels
                 return;
             }
 
+            var downloadPlaylist = IsPlaylistUrl(uri);
+
             _cts = new CancellationTokenSource();
+            var operationId = Interlocked.Increment(ref _downloadOperationId);
 
             CurrentDownload.Progress = 0;
             CurrentDownload.Status = "Подготовка…";
@@ -156,23 +161,39 @@ namespace YtDlpWrapper.ViewModels
                     DownloadType,
                     Format,
                     VideoQuality,
+                    downloadPlaylist,
                     _settingsService.DownloadFolder,
                     progress =>
                     {
+                        if (!IsCurrentOperation(operationId) || _cts.IsCancellationRequested)
+                        {
+                            return;
+                        }
+
                         // ⚠️ UI thread
                         App.MainWindow.DispatcherQueue.TryEnqueue(() =>
                         {
+                            if (!IsCurrentOperation(operationId) || _cts.IsCancellationRequested)
+                            {
+                                return;
+                            }
+
                             CurrentDownload.Progress = progress.Percent;
-                            CurrentDownload.Status = $"Загрузка… {progress.Percent:0.0}%";
+                            CurrentDownload.Status = DownloadProgressStatusBuilder.Build(progress);
                         });
                     },
                     _cts.Token);
 
-                if (_cts.IsCancellationRequested)
+                if (!IsCurrentOperation(operationId) || _cts.IsCancellationRequested)
                     return;
 
                 App.MainWindow.DispatcherQueue.TryEnqueue(() =>
                 {
+                    if (!IsCurrentOperation(operationId) || _cts.IsCancellationRequested)
+                    {
+                        return;
+                    }
+
                     CurrentDownload.Progress = 100;
                     CurrentDownload.Status = "Готово";
                     CurrentDownload.IsDownloading = false;
@@ -180,17 +201,52 @@ namespace YtDlpWrapper.ViewModels
             }
             catch (OperationCanceledException)
             {
-                // отмена
+                if (IsCurrentOperation(operationId))
+                {
+                    CurrentDownload.Status = "Отменено";
+                    CurrentDownload.Progress = 0;
+                }
             }
             catch (System.Exception ex)
             {
+                if (!IsCurrentOperation(operationId))
+                {
+                    return;
+                }
+
                 CurrentDownload.Status = "Ошибка";
                 DownloadFailed?.Invoke(ex.Message);
             }
             finally
             {
-                CurrentDownload.IsDownloading = false;
+                if (IsCurrentOperation(operationId))
+                {
+                    CurrentDownload.IsDownloading = false;
+                }
             }
+        }
+
+        private bool IsCurrentOperation(int operationId)
+        {
+            return operationId == _downloadOperationId;
+        }
+
+        private static bool IsPlaylistUrl(Uri uri)
+        {
+            var host = uri.Host.ToLowerInvariant();
+            var absolutePath = uri.AbsolutePath.ToLowerInvariant();
+            var query = uri.Query.ToLowerInvariant();
+
+            if (host.Contains("youtube.com") || host.Contains("youtu.be"))
+            {
+                return query.Contains("list=");
+            }
+
+            return absolutePath.Contains("/playlist")
+                || absolutePath.Contains("/sets/")
+                || absolutePath.Contains("/album/")
+                || absolutePath.Contains("/mix/")
+                || absolutePath.Contains("/collection/");
         }
 
         public void Shutdown()
