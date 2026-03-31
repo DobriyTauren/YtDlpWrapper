@@ -10,7 +10,7 @@ namespace YtDlpWrapper.Views
         public SettingsPage()
         {
             InitializeComponent();
-            DataContext = App.Services.GetService<SettingsViewModel>();
+            DataContext = App.Services.GetRequiredService<SettingsViewModel>();
         }
     }
 }

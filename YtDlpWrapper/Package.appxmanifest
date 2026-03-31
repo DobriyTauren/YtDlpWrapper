@@ -10,14 +10,14 @@
   <Identity
     Name="f9b01e01-f4b0-443e-9bca-7f8447711739"
     Publisher="CN=dwarf"
-    Version="1.0.0.0" />
+    Version="1.0.0.3" />
 
   <mp:PhoneIdentity PhoneProductId="f9b01e01-f4b0-443e-9bca-7f8447711739" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
     <DisplayName>YtDlpWrapper</DisplayName>
     <PublisherDisplayName>dwarf</PublisherDisplayName>
-    <Logo>Assets\icon.png</Logo>
+    <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
 
   <Dependencies>
@@ -36,17 +36,21 @@
       <uap:VisualElements
         DisplayName="YtDlpWrapper"
         Description="YtDlpWrapper"
-        BackgroundColor="transparent"
-        Square44x44Logo="Assets\icon.png" Square150x150Logo="Assets\icon.png">
-        <uap:DefaultTile  Square71x71Logo="Assets\icon.png" Square310x310Logo="Assets\icon.png" Wide310x150Logo="Assets\icon.png">
+        BackgroundColor="#050A23"
+        Square44x44Logo="Assets\Square44x44Logo.png"
+        Square150x150Logo="Assets\Square150x150Logo.png">
+        <uap:DefaultTile
+          Square71x71Logo="Assets\Square71x71Logo.png"
+          Square310x310Logo="Assets\Square310x310Logo.png"
+          Wide310x150Logo="Assets\Wide310x150Logo.png">
           <uap:ShowNameOnTiles>
             <uap:ShowOn Tile="square150x150Logo"/>
             <uap:ShowOn Tile="square310x310Logo"/>
             <uap:ShowOn Tile="wide310x150Logo"/>
           </uap:ShowNameOnTiles>
-        </uap:DefaultTile >
-        <uap:LockScreen BadgeLogo="Assets\icon.png" Notification="badgeAndTileText"/>
-        <uap:SplashScreen Image="Assets\icon.png"/>
+        </uap:DefaultTile>
+        <uap:LockScreen BadgeLogo="Assets\BadgeLogo.png" Notification="badgeAndTileText"/>
+        <uap:SplashScreen Image="Assets\SplashScreen.png"/>
       </uap:VisualElements>
     </Application>
   </Applications>

@@ -15,15 +15,46 @@
 	<ApplicationIcon>Assets\icon.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
-    <None Remove="Assets\icon.scale-400.png" />
-    <None Remove="Assets\icon.targetsize-256.png" />
-    <None Remove="Assets\Square44x44Logo.scale-400.png" />
-    <None Remove="Assets\Square44x44Logo.targetsize-256.png" />
-    <None Remove="Assets\Square44x44Logo.targetsize-256_altform-lightunplated.png" />
-    <None Remove="Assets\Square44x44Logo.targetsize-256_altform-unplated.png" />
-    <None Remove="Assets\StoreLogo.scale-400.png" />
+    <None Remove="Assets\AppList.scale-*.png" />
+    <None Remove="Assets\AppList.targetsize-*.png" />
+    <None Remove="Assets\BadgeLogo*.png" />
+    <None Remove="Assets\SplashScreen*.png" />
+    <None Remove="Assets\Square150x150Logo*.png" />
+    <None Remove="Assets\Square310x310Logo*.png" />
+    <None Remove="Assets\Square44x44Logo*.png" />
+    <None Remove="Assets\Square71x71Logo*.png" />
+    <None Remove="Assets\StoreLogo*.png" />
+    <None Remove="Assets\Wide310x150Logo*.png" />
     <None Remove="Views\DownloadPage.xaml" />
     <None Remove="Views\SettingsPage.xaml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Remove="Assets\AppList-*.png" />
+    <Content Remove="Assets\BadgeLogo.png" />
+    <Content Remove="Assets\SplashScreen.png" />
+    <Content Remove="Assets\Square150x150Logo.png" />
+    <Content Remove="Assets\Square310x310Logo.png" />
+    <Content Remove="Assets\Square44x44Logo.png" />
+    <Content Remove="Assets\Square44x44Logo.altform-*.png" />
+    <Content Remove="Assets\Square44x44Logo.targetsize-*.png" />
+    <Content Remove="Assets\Square71x71Logo.png" />
+    <Content Remove="Assets\StoreLogo.png" />
+    <Content Remove="Assets\Wide310x150Logo.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Assets\BadgeLogo.png" />
+    <Content Include="Assets\SplashScreen.png" />
+    <Content Include="Assets\Square150x150Logo.png" />
+    <Content Include="Assets\Square310x310Logo.png" />
+    <Content Include="Assets\Square44x44Logo.png" />
+    <Content Include="Assets\Square44x44Logo.targetsize-*.png" />
+    <Content Include="Assets\Square71x71Logo.png" />
+    <Content Include="Assets\StoreLogo.png" />
+    <Content Include="Assets\Wide310x150Logo.png" />
+    <Content Include="Assets\icon.scale-400.png" />
+    <Content Include="Assets\icon.targetsize-256.png" />
+    <Content Include="Assets\icon.targetsize-256_altform-lightunplated.png" />
+    <Content Include="Assets\icon.targetsize-256_altform-unplated.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -42,6 +73,10 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.2" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.7463" />
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260101001" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="Models\FormatInfo.cs" />
+    <Compile Remove="Models\YtDlpError.cs" />
   </ItemGroup>
   <ItemGroup>
     <Page Update="Views\SettingsPage.xaml">
@@ -80,5 +115,13 @@
     <PublishReadyToRun Condition="'$(Configuration)' != 'Debug'">True</PublishReadyToRun>
     <PublishTrimmed Condition="'$(Configuration)' == 'Debug'">False</PublishTrimmed>
     <PublishTrimmed Condition="'$(Configuration)' != 'Debug'">True</PublishTrimmed>
+    <GenerateAppInstallerFile>False</GenerateAppInstallerFile>
+    <AppxPackageSigningEnabled>True</AppxPackageSigningEnabled>
+    <PackageCertificateThumbprint>9C99A5BF5BE8F4E76DC4D0AF61956E8FA5EF3A38</PackageCertificateThumbprint>
+    <AppxPackageSigningTimestampDigestAlgorithm>SHA256</AppxPackageSigningTimestampDigestAlgorithm>
+    <AppxAutoIncrementPackageRevision>True</AppxAutoIncrementPackageRevision>
+    <GenerateTestArtifacts>True</GenerateTestArtifacts>
+    <AppxBundle>Never</AppxBundle>
+    <HoursBetweenUpdateChecks>0</HoursBetweenUpdateChecks>
   </PropertyGroup>
 </Project>

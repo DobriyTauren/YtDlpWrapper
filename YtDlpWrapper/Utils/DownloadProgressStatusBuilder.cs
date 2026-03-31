@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text.RegularExpressions;
 
 namespace YtDlpWrapper.Utils
@@ -9,7 +9,9 @@ namespace YtDlpWrapper.Utils
 
         public static string Build(DownloadProgressInfo progress)
         {
-            var currentItemText = BuildItemStatus(progress.ItemPercent, progress.Text);
+            var currentItemText = progress.IsPostProcessing
+                ? "Работает FFmpeg"
+                : BuildItemStatus(progress.ItemPercent, progress.Text);
 
             if (!progress.IsPlaylist || !progress.PlaylistItemIndex.HasValue || !progress.PlaylistItemCount.HasValue)
             {
@@ -19,7 +21,7 @@ namespace YtDlpWrapper.Utils
             var playlistText = $"{progress.PlaylistItemIndex.Value}/{progress.PlaylistItemCount.Value}";
             return string.IsNullOrWhiteSpace(currentItemText)
                 ? playlistText
-                : $"{playlistText} \u00B7 {currentItemText}";
+                : $"{playlistText} · {currentItemText}";
         }
 
         private static string BuildItemStatus(double percent, string? ytDlpLine)
@@ -29,7 +31,7 @@ namespace YtDlpWrapper.Utils
 
             return string.IsNullOrWhiteSpace(totalSize)
                 ? percentText
-                : $"{percentText} \u0438\u0437 {totalSize}";
+                : $"{percentText} из {totalSize}";
         }
 
         private static string? TryGetTotalSize(string? ytDlpLine)
@@ -48,15 +50,15 @@ namespace YtDlpWrapper.Utils
             var sizeValue = double.Parse(sizeMatch.Groups["size"].Value, CultureInfo.InvariantCulture);
             var sizeUnit = sizeMatch.Groups["unit"].Value switch
             {
-                "TiB" => "\u0422\u0411",
-                "GiB" => "\u0413\u0411",
-                "MiB" => "\u041C\u0411",
-                "KiB" => "\u041A\u0411",
-                "B" => "\u0411",
+                "TiB" => "ТБ",
+                "GiB" => "ГБ",
+                "MiB" => "МБ",
+                "KiB" => "КБ",
+                "B" => "Б",
                 _ => sizeMatch.Groups["unit"].Value
             };
 
-            var numberFormat = sizeValue >= 100 || sizeUnit == "\u0411" ? "0" : sizeValue >= 10 ? "0.#" : "0.##";
+            var numberFormat = sizeValue >= 100 || sizeUnit == "Б" ? "0" : sizeValue >= 10 ? "0.#" : "0.##";
             var formattedValue = sizeValue.ToString(numberFormat, CultureInfo.CurrentCulture);
 
             return $"{formattedValue} {sizeUnit}";

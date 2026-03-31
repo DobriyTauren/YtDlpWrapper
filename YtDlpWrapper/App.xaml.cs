@@ -2,8 +2,8 @@
 using Microsoft.UI.Xaml;
 using System;
 using YtDlpWrapper.Services;
-using YtDlpWrapper.ViewModels;
 using YtDlpWrapper.Utils;
+using YtDlpWrapper.ViewModels;
 using LaunchActivatedEventArgs = Microsoft.UI.Xaml.LaunchActivatedEventArgs;
 
 
@@ -22,25 +22,25 @@ namespace YtDlpWrapper
 
         protected override void OnLaunched(LaunchActivatedEventArgs args)
         {
+            Services = ConfigureServices();
+            MainWindow = Services.GetRequiredService<MainWindow>();
+            MainWindow.Activate();
+        }
+
+        private static IServiceProvider ConfigureServices()
+        {
             var services = new ServiceCollection();
 
-            // ViewModels
             services.AddSingleton<MainViewModel>();
             services.AddSingleton<DownloadViewModel>();
             services.AddSingleton<SettingsViewModel>();
 
-            // Services
             services.AddSingleton<YtDlpService>();
             services.AddSingleton<SettingsService>();
 
-            // Window
             services.AddSingleton<MainWindow>();
 
-            Services = services.BuildServiceProvider();
-
-            MainWindow = Services.GetRequiredService<MainWindow>();
-
-            MainWindow.Activate();
+            return services.BuildServiceProvider();
         }
     }
 }

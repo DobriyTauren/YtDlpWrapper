@@ -1,4 +1,4 @@
-namespace YtDlpWrapper.Utils
+﻿namespace YtDlpWrapper.Utils
 {
     public class DownloadProgressInfo
     {
@@ -8,5 +8,6 @@ namespace YtDlpWrapper.Utils
         public bool IsPlaylist { get; set; }
         public int? PlaylistItemIndex { get; set; }
         public int? PlaylistItemCount { get; set; }
+        public bool IsPostProcessing { get; set; }
     }
 }

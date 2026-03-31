@@ -4,8 +4,12 @@ namespace YtDlpWrapper.Models
 {
     public class DownloadItem : ObservableObject
     {
-        public string Url { get; set; }
-        public string Title { get; set; }
+        public DownloadItem()
+        {
+            _status = string.Empty;
+        }
+
+        public string Url { get; set; } = string.Empty;
 
         private double _progress;
         public double Progress

@@ -6,34 +6,36 @@ namespace YtDlpWrapper.Services
     public class SettingsService
     {
         private const string FolderKey = "DownloadFolder";
+        private const string DownloadTypeKey = "DownloadType";
+        private const string FormatKey = "Format";
+        private const string VideoQualityKey = "VideoQuality";
 
         private readonly ApplicationDataContainer _settings = ApplicationData.Current.LocalSettings;
 
         public DownloadType DownloadType
         {
-            get => (DownloadType)(_settings.Values["DownloadType"] ?? DownloadType.Video);
-            set => _settings.Values["DownloadType"] = (int)value;
+            get => (DownloadType)(_settings.Values[DownloadTypeKey] ?? DownloadType.Video);
+            set => _settings.Values[DownloadTypeKey] = (int)value;
         }
 
         public string Format
         {
-            get => _settings.Values["Format"] as string ?? "mp4";
-            set => _settings.Values["Format"] = value;
+            get => _settings.Values[FormatKey] as string ?? "mp4";
+            set => _settings.Values[FormatKey] = value;
         }
 
         public VideoQuality VideoQuality
         {
-            get => (VideoQuality)(_settings.Values["VideoQuality"] ?? VideoQuality.Best);
-            set => _settings.Values["VideoQuality"] = (int)value;
+            get => (VideoQuality)(_settings.Values[VideoQualityKey] ?? VideoQuality.Best);
+            set => _settings.Values[VideoQualityKey] = (int)value;
         }
 
-        public string DownloadFolder =>
-            ApplicationData.Current.LocalSettings.Values[FolderKey] as string
+        public string DownloadFolder => _settings.Values[FolderKey] as string
             ?? UserDataPaths.GetDefault().Downloads;
 
         public void SetDownloadFolder(string path)
         {
-            ApplicationData.Current.LocalSettings.Values[FolderKey] = path;
+            _settings.Values[FolderKey] = path;
         }
     }
 }

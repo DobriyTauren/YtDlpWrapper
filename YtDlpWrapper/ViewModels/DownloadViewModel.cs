@@ -2,6 +2,7 @@
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using YtDlpWrapper.Models;
 using YtDlpWrapper.Services;
@@ -14,13 +15,11 @@ namespace YtDlpWrapper.ViewModels
         private readonly YtDlpService _ytDlp;
         private readonly SettingsService _settingsService;
 
-        private CancellationTokenSource _cts;
+        private CancellationTokenSource? _cts;
         private int _downloadOperationId;
+        private bool _isUpdatingYtDlp;
 
-        private double _progress;
-        private int _selectedTypeIndex;
-
-        public event Action<string> DownloadFailed;
+        public event Action<DownloadFailureInfo>? DownloadFailed;
 
         public DownloadItem CurrentDownload { get; } = new();
 
@@ -37,43 +36,28 @@ namespace YtDlpWrapper.ViewModels
             DownloadType = DownloadType.Audio;
         });
 
-
         public bool IsVideo => DownloadType == DownloadType.Video;
 
-        public double Progress
+        public bool IsUpdatingYtDlp
         {
-            get => _progress;
-            set => SetProperty(ref _progress, value);
-        }
-
-        public int SelectedTypeIndex
-        {
-            get => _selectedTypeIndex;
-            set
-            {
-                if (SetProperty(ref _selectedTypeIndex, value))
-                {
-
-                    DownloadType = value == 0 ? DownloadType.Video : DownloadType.Audio;
-                }
-            }
+            get => _isUpdatingYtDlp;
+            private set => SetProperty(ref _isUpdatingYtDlp, value);
         }
 
         public DownloadViewModel(YtDlpService service, SettingsService settingsService)
         {
             _ytDlp = service;
             _settingsService = settingsService;
-            
-            _selectedTypeIndex = DownloadType == DownloadType.Video ? 0 : 1;
 
             DownloadCommand = new RelayCommand(StartDownload);
             CancelCommand = new RelayCommand(CancelDownload);
+
+            
         }
 
         public ObservableCollection<string> VideoFormats { get; } = new() { "mp4", "webm", "mkv" };
         public ObservableCollection<string> AudioFormats { get; } = new() { "mp3", "m4a", "opus" };
         public ObservableCollection<string> Formats => IsVideo ? VideoFormats : AudioFormats;
-        public ObservableCollection<string> TypeOptions { get; } = new() { "🎬 Видео", "🎵 Аудио" };
 
         public ObservableCollection<VideoQuality> VideoQualities { get; } =
             new()
@@ -124,10 +108,7 @@ namespace YtDlpWrapper.ViewModels
         {
             Interlocked.Increment(ref _downloadOperationId);
             _cts?.Cancel();
-
-            CurrentDownload.Status = "Отменено";
-            CurrentDownload.IsDownloading = false;
-            CurrentDownload.Progress = 0;
+            SetCancelledState();
         }
 
         private async void StartDownload()
@@ -136,24 +117,23 @@ namespace YtDlpWrapper.ViewModels
 
             if (string.IsNullOrWhiteSpace(cleanUrl))
             {
-                DownloadFailed?.Invoke("Введите корректную ссылку.");
+                DownloadFailed?.Invoke(new DownloadFailureInfo("Введите корректную ссылку."));
                 return;
             }
 
             if (!System.Uri.TryCreate(cleanUrl, UriKind.Absolute, out var uri) || (uri.Scheme != "http" && uri.Scheme != "https"))
             {
-                DownloadFailed?.Invoke("Некорректный URL.");
+                DownloadFailed?.Invoke(new DownloadFailureInfo("Некорректный URL."));
                 return;
             }
 
             var downloadPlaylist = IsPlaylistUrl(uri);
 
-            _cts = new CancellationTokenSource();
+            var cts = new CancellationTokenSource();
+            _cts = cts;
             var operationId = Interlocked.Increment(ref _downloadOperationId);
 
-            CurrentDownload.Progress = 0;
-            CurrentDownload.Status = "Подготовка…";
-            CurrentDownload.IsDownloading = true;
+            BeginDownload();
 
             try
             {
@@ -165,7 +145,7 @@ namespace YtDlpWrapper.ViewModels
                     _settingsService.DownloadFolder,
                     progress =>
                     {
-                        if (!IsCurrentOperation(operationId) || _cts.IsCancellationRequested)
+                        if (!IsCurrentOperation(operationId) || cts.IsCancellationRequested)
                         {
                             return;
                         }
@@ -173,7 +153,7 @@ namespace YtDlpWrapper.ViewModels
                         // ⚠️ UI thread
                         App.MainWindow.DispatcherQueue.TryEnqueue(() =>
                         {
-                            if (!IsCurrentOperation(operationId) || _cts.IsCancellationRequested)
+                            if (!IsCurrentOperation(operationId) || cts.IsCancellationRequested)
                             {
                                 return;
                             }
@@ -182,14 +162,14 @@ namespace YtDlpWrapper.ViewModels
                             CurrentDownload.Status = DownloadProgressStatusBuilder.Build(progress);
                         });
                     },
-                    _cts.Token);
+                    cts.Token);
 
-                if (!IsCurrentOperation(operationId) || _cts.IsCancellationRequested)
+                if (!IsCurrentOperation(operationId) || cts.IsCancellationRequested)
                     return;
 
                 App.MainWindow.DispatcherQueue.TryEnqueue(() =>
                 {
-                    if (!IsCurrentOperation(operationId) || _cts.IsCancellationRequested)
+                    if (!IsCurrentOperation(operationId) || cts.IsCancellationRequested)
                     {
                         return;
                     }
@@ -203,9 +183,18 @@ namespace YtDlpWrapper.ViewModels
             {
                 if (IsCurrentOperation(operationId))
                 {
-                    CurrentDownload.Status = "Отменено";
-                    CurrentDownload.Progress = 0;
+                    SetCancelledState();
                 }
+            }
+            catch (YtDlpUpdateRequiredException ex)
+            {
+                if (!IsCurrentOperation(operationId))
+                {
+                    return;
+                }
+
+                CurrentDownload.Status = "Ошибка";
+                DownloadFailed?.Invoke(new DownloadFailureInfo(ex.Message, canUpdateYtDlp: true));
             }
             catch (System.Exception ex)
             {
@@ -215,10 +204,17 @@ namespace YtDlpWrapper.ViewModels
                 }
 
                 CurrentDownload.Status = "Ошибка";
-                DownloadFailed?.Invoke(ex.Message);
+                DownloadFailed?.Invoke(new DownloadFailureInfo(ex.Message));
             }
             finally
             {
+                cts.Dispose();
+
+                if (ReferenceEquals(_cts, cts))
+                {
+                    _cts = null;
+                }
+
                 if (IsCurrentOperation(operationId))
                 {
                     CurrentDownload.IsDownloading = false;
@@ -229,6 +225,20 @@ namespace YtDlpWrapper.ViewModels
         private bool IsCurrentOperation(int operationId)
         {
             return operationId == _downloadOperationId;
+        }
+
+        private void BeginDownload()
+        {
+            CurrentDownload.Progress = 0;
+            CurrentDownload.Status = "Подготовка…";
+            CurrentDownload.IsDownloading = true;
+        }
+
+        private void SetCancelledState()
+        {
+            CurrentDownload.Status = "Отменено";
+            CurrentDownload.IsDownloading = false;
+            CurrentDownload.Progress = 0;
         }
 
         private static bool IsPlaylistUrl(Uri uri)
@@ -253,6 +263,30 @@ namespace YtDlpWrapper.ViewModels
         {
             _cts?.Cancel();
             _ytDlp.KillCurrent();
+        }
+
+        public Task UpdateYtDlpAsync()
+        {
+            return UpdateYtDlpCoreAsync();
+        }
+
+        private async Task UpdateYtDlpCoreAsync()
+        {
+            if (IsUpdatingYtDlp)
+            {
+                return;
+            }
+
+            IsUpdatingYtDlp = true;
+
+            try
+            {
+                await _ytDlp.UpdateYtDlpAsync();
+            }
+            finally
+            {
+                IsUpdatingYtDlp = false;
+            }
         }
     }
 }

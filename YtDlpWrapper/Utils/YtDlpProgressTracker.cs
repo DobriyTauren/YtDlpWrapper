@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Globalization;
 using System.Text.RegularExpressions;
 
@@ -8,9 +8,12 @@ namespace YtDlpWrapper.Utils
     {
         private static readonly Regex PercentRegex = new(@"\[download\]\s+(?<percent>\d+(?:\.\d+)?)%");
         private static readonly Regex PlaylistItemRegex = new(@"\[download\]\s+Downloading item (?<index>\d+) of (?<count>\d+)");
+        private static readonly Regex FfmpegStageRegex = new(@"\[(ExtractAudio|VideoRemuxer|VideoConvertor|Merger)\]", RegexOptions.IgnoreCase);
 
         private int? _playlistItemIndex;
         private int? _playlistItemCount;
+        private double _lastOverallPercent;
+        private double _lastItemPercent;
 
         public DownloadProgressInfo? Parse(string? line)
         {
@@ -29,13 +32,27 @@ namespace YtDlpWrapper.Utils
             }
 
             var percentMatch = PercentRegex.Match(line);
-            if (!percentMatch.Success)
+            if (percentMatch.Success)
+            {
+                var itemPercent = double.Parse(percentMatch.Groups["percent"].Value, CultureInfo.InvariantCulture);
+                return CreateProgressInfo(line, itemPercent);
+            }
+
+            if (!FfmpegStageRegex.IsMatch(line))
             {
                 return null;
             }
 
-            var itemPercent = double.Parse(percentMatch.Groups["percent"].Value, CultureInfo.InvariantCulture);
-            return CreateProgressInfo(line, itemPercent);
+            return new DownloadProgressInfo
+            {
+                Percent = IsPlaylistActive() ? _lastOverallPercent : 100,
+                ItemPercent = IsPlaylistActive() ? _lastItemPercent : 100,
+                Text = line,
+                IsPlaylist = IsPlaylistActive(),
+                PlaylistItemIndex = _playlistItemIndex,
+                PlaylistItemCount = _playlistItemCount,
+                IsPostProcessing = true
+            };
         }
 
         private DownloadProgressInfo CreateProgressInfo(string line, double itemPercent)
@@ -48,15 +65,23 @@ namespace YtDlpWrapper.Utils
                 overallPercent = ((_playlistItemIndex!.Value - 1) + (itemPercent / 100d)) / _playlistItemCount!.Value * 100d;
             }
 
+            _lastOverallPercent = Math.Clamp(overallPercent, 0, 100);
+            _lastItemPercent = Math.Clamp(itemPercent, 0, 100);
+
             return new DownloadProgressInfo
             {
-                Percent = Math.Clamp(overallPercent, 0, 100),
-                ItemPercent = Math.Clamp(itemPercent, 0, 100),
+                Percent = _lastOverallPercent,
+                ItemPercent = _lastItemPercent,
                 Text = line,
                 IsPlaylist = isPlaylist,
                 PlaylistItemIndex = _playlistItemIndex,
                 PlaylistItemCount = _playlistItemCount
             };
+        }
+
+        private bool IsPlaylistActive()
+        {
+            return _playlistItemIndex.HasValue && _playlistItemCount.GetValueOrDefault() > 1;
         }
     }
 }

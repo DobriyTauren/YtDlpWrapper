@@ -1,6 +1,8 @@
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
+using System;
+using System.IO;
 using Windows.UI;
 using WinRT.Interop;
 using YtDlpWrapper.Models;
@@ -34,7 +36,11 @@ namespace YtDlpWrapper
             var windowId = Win32Interop.GetWindowIdFromWindow(hwnd);
             _appWindow = AppWindow.GetFromWindowId(windowId);
 
-            _appWindow.SetIcon("Assets/icon.ico");
+            var iconPath = Path.Combine(AppContext.BaseDirectory, "Assets", "icon.ico");
+            if (File.Exists(iconPath))
+            {
+                _appWindow.SetIcon(iconPath);
+            }
 
             _appWindow.Resize(new Windows.Graphics.SizeInt32(
                 options.Width,
@@ -73,9 +79,9 @@ namespace YtDlpWrapper
         private void MainWindow_Closed(object sender, WindowEventArgs args)
         {
             if (Content is FrameworkElement root &&
-                root.DataContext is DownloadViewModel vm)
+                root.DataContext is MainViewModel vm)
             {
-                vm.Shutdown();
+                vm.Download.Shutdown();
             }
         }
     }

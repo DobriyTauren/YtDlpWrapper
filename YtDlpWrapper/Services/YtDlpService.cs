@@ -6,20 +6,21 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using Windows.Storage;
 using YtDlpWrapper.Models;
 
 namespace YtDlpWrapper.Utils
 {
     public class YtDlpService
     {
-        private Process _currentProcess;
+        private Process? _currentProcess;
 
         public async Task DownloadAsync(string url, DownloadType downloadType, string format, VideoQuality quality,
             bool downloadPlaylist, string outputFolder, Action<DownloadProgressInfo> onProgress,
             CancellationToken cancellationToken = default)
         {
-            var appFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            var ytDlpPath = Path.Combine(appFolder, "yt-dlp", "yt-dlp.exe");
+            var toolsFolder = await EnsureToolsFolderAsync(cancellationToken).ConfigureAwait(false);
+            var ytDlpPath = Path.Combine(toolsFolder, "yt-dlp.exe");
             var progressTracker = new YtDlpProgressTracker();
             var existingPartFiles = CapturePartFiles(outputFolder);
 
@@ -32,6 +33,7 @@ namespace YtDlpWrapper.Utils
                 format,
                 quality,
                 downloadPlaylist,
+                toolsFolder,
                 outputFolder
             );
 
@@ -41,6 +43,7 @@ namespace YtDlpWrapper.Utils
                 Arguments = arguments,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
+                WorkingDirectory = toolsFolder,
                 UseShellExecute = false,
                 CreateNoWindow = true
             };
@@ -50,7 +53,7 @@ namespace YtDlpWrapper.Utils
                 _currentProcess = new Process { StartInfo = psi };
                 _currentProcess.Start();
 
-                cancellationToken.Register(() =>
+                using var cancellationRegistration = cancellationToken.Register(() =>
                 {
                     try
                     {
@@ -61,36 +64,17 @@ namespace YtDlpWrapper.Utils
                 });
 
                 var errorLines = new List<string>();
+                var stdoutTask = Task.Run(() => ReadStandardOutputAsync(_currentProcess, progressTracker, onProgress), cancellationToken);
+                var stderrTask = Task.Run(() => ReadStandardErrorAsync(_currentProcess, progressTracker, onProgress, errorLines), cancellationToken);
 
-                var stdoutTask = Task.Run(async () =>
-                {
-                    while (!_currentProcess.StandardOutput.EndOfStream)
-                    {
-                        var line = await _currentProcess.StandardOutput.ReadLineAsync();
-
-                        var progress = progressTracker.Parse(line);
-                        if (progress != null)
-                            onProgress(progress);
-                    }
-                });
-
-                var stderrTask = Task.Run(async () =>
-                {
-                    while (!_currentProcess.StandardError.EndOfStream)
-                    {
-                        var line = await _currentProcess.StandardError.ReadLineAsync();
-                        errorLines.Add(line);
-                    }
-                });
-
-                await Task.WhenAll(stdoutTask, stderrTask);
-                await _currentProcess.WaitForExitAsync();
+                await Task.WhenAll(stdoutTask, stderrTask).ConfigureAwait(false);
+                await _currentProcess.WaitForExitAsync().ConfigureAwait(false);
 
                 if (cancellationToken.IsCancellationRequested)
                     throw new OperationCanceledException(cancellationToken);
 
                 if (_currentProcess.ExitCode != 0)
-                    throw new Exception(string.Join("\n", errorLines));
+                    throw new Exception(MapErrorMessage(errorLines));
             }
             finally
             {
@@ -151,24 +135,26 @@ namespace YtDlpWrapper.Utils
                     }
                 }
             }
-            catch (Exception e)
+            catch
             {
-                throw new Exception(e.Message);
+                // Отмена не должна ломаться из-за неудачной очистки временных файлов.
             }
         }
 
-        private string BuildArguments(string url, DownloadType type, string format, VideoQuality quality, bool downloadPlaylist, string outputFolder)
+        private string BuildArguments(string url, DownloadType type, string format, VideoQuality quality, bool downloadPlaylist, string toolsFolder, string outputFolder)
         {
             var args = new List<string>
             {
                 $"\"{url}\"",
                 "--newline",
+                $"--ffmpeg-location \"{toolsFolder}\"",
+                "--postprocessor-args \"FFmpeg:-loglevel info -progress pipe:2 -nostats\"",
                 downloadPlaylist ? "--yes-playlist" : "--no-playlist"
             };
 
-            if (url.Contains("youtube.com") || url.Contains("youtu.be"))
+            if (IsYoutubeUrl(url))
             {
-                args.Add("--extractor-args \"youtube:player-client=tv_embedded\"");            
+                args.Add("--extractor-args \"youtube:player-client=tv_embedded\"");
             }
 
             if (type == DownloadType.Audio)
@@ -189,6 +175,199 @@ namespace YtDlpWrapper.Utils
             }
 
             return string.Join(" ", args);
+        }
+
+        public async Task UpdateYtDlpAsync(CancellationToken cancellationToken = default)
+        {
+            var toolsFolder = await EnsureToolsFolderAsync(cancellationToken).ConfigureAwait(false);
+            var ytDlpPath = Path.Combine(toolsFolder, "yt-dlp.exe");
+            var outputLines = new List<string>();
+
+            var psi = new ProcessStartInfo
+            {
+                FileName = ytDlpPath,
+                Arguments = "-U",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                WorkingDirectory = toolsFolder,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            using var process = new Process { StartInfo = psi };
+            process.Start();
+
+            var stdoutTask = ReadProcessLinesAsync(process.StandardOutput, outputLines, cancellationToken);
+            var stderrTask = ReadProcessLinesAsync(process.StandardError, outputLines, cancellationToken);
+
+            await Task.WhenAll(stdoutTask, stderrTask).ConfigureAwait(false);
+            await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
+
+            if (process.ExitCode != 0)
+            {
+                var updateError = string.Join("\n", outputLines.Where(line => !string.IsNullOrWhiteSpace(line)));
+                throw new Exception(string.IsNullOrWhiteSpace(updateError)
+                    ? "Не удалось обновить yt-dlp."
+                    : updateError);
+            }
+        }
+
+        private async Task<string> EnsureToolsFolderAsync(CancellationToken cancellationToken)
+        {
+            var bundledToolsFolder = GetBundledToolsFolder();
+            var writableToolsFolder = Path.Combine(ApplicationData.Current.LocalFolder.Path, "yt-dlp");
+
+            Directory.CreateDirectory(writableToolsFolder);
+
+            await EnsureToolCopiedAsync(
+                Path.Combine(bundledToolsFolder, "yt-dlp.exe"),
+                Path.Combine(writableToolsFolder, "yt-dlp.exe"),
+                cancellationToken).ConfigureAwait(false);
+
+            await EnsureToolCopiedAsync(
+                Path.Combine(bundledToolsFolder, "ffmpeg.exe"),
+                Path.Combine(writableToolsFolder, "ffmpeg.exe"),
+                cancellationToken).ConfigureAwait(false);
+
+            return writableToolsFolder;
+        }
+
+        private string GetBundledToolsFolder()
+        {
+            var appFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)
+                ?? throw new DirectoryNotFoundException("Не удалось определить папку приложения.");
+
+            return Path.Combine(appFolder, "yt-dlp");
+        }
+
+        private static async Task EnsureToolCopiedAsync(string sourcePath, string destinationPath, CancellationToken cancellationToken)
+        {
+            if (File.Exists(destinationPath))
+            {
+                return;
+            }
+
+            if (!File.Exists(sourcePath))
+            {
+                throw new FileNotFoundException($"Не найден обязательный файл: {Path.GetFileName(sourcePath)}");
+            }
+
+            await using var sourceStream = new FileStream(sourcePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            await using var destinationStream = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None);
+            await sourceStream.CopyToAsync(destinationStream, cancellationToken).ConfigureAwait(false);
+        }
+
+        private static async Task ReadProcessLinesAsync(StreamReader reader, List<string> outputLines, CancellationToken cancellationToken)
+        {
+            while (true)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                var line = await reader.ReadLineAsync().ConfigureAwait(false);
+                if (line == null)
+                {
+                    break;
+                }
+
+                if (!string.IsNullOrWhiteSpace(line))
+                {
+                    outputLines.Add(line);
+                }
+            }
+        }
+
+        private async Task ReadStandardOutputAsync(Process process, YtDlpProgressTracker progressTracker, Action<DownloadProgressInfo> onProgress)
+        {
+            while (true)
+            {
+                var line = await process.StandardOutput.ReadLineAsync().ConfigureAwait(false);
+                if (line == null)
+                {
+                    break;
+                }
+
+                var progress = progressTracker.Parse(line);
+
+                if (progress != null)
+                {
+                    onProgress(progress);
+                }
+            }
+        }
+
+        private async Task ReadStandardErrorAsync(Process process, YtDlpProgressTracker progressTracker, Action<DownloadProgressInfo> onProgress, List<string> errorLines)
+        {
+            while (true)
+            {
+                var line = await process.StandardError.ReadLineAsync().ConfigureAwait(false);
+                if (line == null)
+                {
+                    break;
+                }
+
+                var progress = progressTracker.Parse(line);
+
+                if (progress != null)
+                {
+                    onProgress(progress);
+                    continue;
+                }
+
+                if (!string.IsNullOrWhiteSpace(line))
+                {
+                    errorLines.Add(line);
+                }
+            }
+        }
+
+        private string MapErrorMessage(List<string> errorLines)
+        {
+            var errorText = string.Join("\n", errorLines.Where(line => !string.IsNullOrWhiteSpace(line)));
+
+            if (IsOutdatedYtDlpError(errorText))
+            {
+                throw new YtDlpUpdateRequiredException(
+                    "Похоже, встроенный yt-dlp устарел и больше не проходит проверку YouTube.\n\nОбновить yt-dlp сейчас?");
+            }
+
+            if (IsVpnBlockedYoutubeError(errorText))
+            {
+                return "Загрузка недоступна: YouTube отклонил запрос. Приложение не поддерживает работу через VPN или прокси. Отключите VPN и попробуйте снова.";
+            }
+
+            return string.IsNullOrWhiteSpace(errorText)
+                ? "Не удалось выполнить загрузку."
+                : errorText;
+        }
+
+        private bool IsVpnBlockedYoutubeError(string errorText)
+        {
+            if (string.IsNullOrWhiteSpace(errorText))
+            {
+                return false;
+            }
+
+            return errorText.Contains("Sign in to confirm you’re not a bot", StringComparison.OrdinalIgnoreCase)
+                || errorText.Contains("Sign in to confirm you're not a bot", StringComparison.OrdinalIgnoreCase)
+                || errorText.Contains("Use --cookies-from-browser", StringComparison.OrdinalIgnoreCase)
+                || errorText.Contains("[youtube]", StringComparison.OrdinalIgnoreCase) && errorText.Contains("not a bot", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private bool IsOutdatedYtDlpError(string errorText)
+        {
+            if (string.IsNullOrWhiteSpace(errorText))
+            {
+                return false;
+            }
+
+            return errorText.Contains("The following content is not available on this app", StringComparison.OrdinalIgnoreCase)
+                || errorText.Contains("Watch on the latest version of YouTube", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private bool IsYoutubeUrl(string url)
+        {
+            return url.Contains("youtube.com", StringComparison.OrdinalIgnoreCase)
+                || url.Contains("youtu.be", StringComparison.OrdinalIgnoreCase);
         }
 
         private string GetVideoFormatArg(string format, VideoQuality quality)

@@ -46,7 +46,7 @@ namespace YtDlpWrapper.ViewModels
             var hwnd = WindowNative.GetWindowHandle(App.MainWindow);
             InitializeWithWindow.Initialize(folderPicker, hwnd);
 
-            StorageFolder folder = await folderPicker.PickSingleFolderAsync();
+            var folder = await folderPicker.PickSingleFolderAsync();
 
             if (folder != null)
             {
@@ -58,7 +58,7 @@ namespace YtDlpWrapper.ViewModels
         private async void OpenDownloadFolder()
         {
             var folder = await StorageFolder.GetFolderFromPathAsync(DownloadFolder);
-            await Windows.System.Launcher.LaunchFolderAsync(folder);
+            _ = await Windows.System.Launcher.LaunchFolderAsync(folder);
         }
     }
 }
