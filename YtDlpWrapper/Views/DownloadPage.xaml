@@ -8,54 +8,9 @@
 
     <Page.Resources>
         <conv:EnumDescriptionConverter x:Key="EnumDescriptionConverter"/>
-        <conv:BoolToBrushConverter x:Key="BoolToBrushConverter"
-                                   TrueBrush="#db9ee4"
-                                   FalseBrush="Transparent"/>
-
-        <conv:BoolToBrushConverter x:Key="InverseBoolToBrushConverter"
-                                   Invert="True"
-                                   TrueBrush="#db9ee4"
-                                   FalseBrush="Transparent"/>
-
         <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
         <conv:BoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter" Invert="True"/>
         <conv:BoolNegationConverter x:Key="BoolNegationConverter"/>
-
-        <Style x:Key="ToggleButtonStyle" TargetType="Button">
-            <Setter Property="Height" Value="40"/>
-            <Setter Property="Width" Value="auto"/>
-            <Setter Property="HorizontalAlignment" Value="Stretch"/>
-            <Setter Property="CornerRadius" Value="10"/>
-
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Grid>
-                            <Border
-                                x:Name="Root"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="{TemplateBinding CornerRadius}">
-                                <ContentPresenter
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center"/>
-                            </Border>
-
-                            <VisualStateManager.VisualStateGroups>
-                                <VisualStateGroup x:Name="CommonStates">
-                                    <VisualState x:Name="Pressed">
-                                        <VisualState.Setters>
-                                            <Setter Target="Root.Background" Value="#9c6bb0"/>
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                </VisualStateGroup>
-                            </VisualStateManager.VisualStateGroups>
-                        </Grid>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
     </Page.Resources>
 
     <ScrollViewer>
@@ -88,19 +43,49 @@
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
 
-                        <Button Grid.Column="0"
+                        <Grid Grid.Column="0">
+                            <Button
                                 Content="Видео"
-                                Style="{StaticResource ToggleButtonStyle}"
+                                Height="40"
+                                CornerRadius="10"
+                                HorizontalAlignment="Stretch"
+                                Style="{ThemeResource AccentButtonStyle}"
                                 Command="{Binding VideoButtonCommand}"
                                 IsEnabled="{Binding IsUpdatingYtDlp, Converter={StaticResource BoolNegationConverter}}"
-                                Background="{Binding IsVideo, Converter={StaticResource BoolToBrushConverter}}"/>
+                                Visibility="{Binding IsVideo, Converter={StaticResource BoolToVisibilityConverter}}"/>
 
-                        <Button Grid.Column="1"
+                            <Button
+                                Content="Видео"
+                                Height="40"
+                                CornerRadius="10"
+                                HorizontalAlignment="Stretch"
+                                Background="Transparent"
+                                Command="{Binding VideoButtonCommand}"
+                                IsEnabled="{Binding IsUpdatingYtDlp, Converter={StaticResource BoolNegationConverter}}"
+                                Visibility="{Binding IsVideo, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
+                        </Grid>
+
+                        <Grid Grid.Column="1">
+                            <Button
                                 Content="Аудио"
-                                Style="{StaticResource ToggleButtonStyle}"
+                                Height="40"
+                                CornerRadius="10"
+                                HorizontalAlignment="Stretch"
+                                Style="{ThemeResource AccentButtonStyle}"
                                 Command="{Binding AudioButtonCommand}"
                                 IsEnabled="{Binding IsUpdatingYtDlp, Converter={StaticResource BoolNegationConverter}}"
-                                Background="{Binding IsVideo, Converter={StaticResource InverseBoolToBrushConverter}}"/>
+                                Visibility="{Binding IsVideo, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
+
+                            <Button
+                                Content="Аудио"
+                                Height="40"
+                                CornerRadius="10"
+                                HorizontalAlignment="Stretch"
+                                Background="Transparent"
+                                Command="{Binding AudioButtonCommand}"
+                                IsEnabled="{Binding IsUpdatingYtDlp, Converter={StaticResource BoolNegationConverter}}"
+                                Visibility="{Binding IsVideo, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                        </Grid>
                     </Grid>
 
                     <Grid ColumnSpacing="12">

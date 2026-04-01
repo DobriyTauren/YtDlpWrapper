@@ -10,7 +10,7 @@
   <Identity
     Name="f9b01e01-f4b0-443e-9bca-7f8447711739"
     Publisher="CN=dwarf"
-    Version="1.0.0.3" />
+    Version="1.0.0.0" />
 
   <mp:PhoneIdentity PhoneProductId="f9b01e01-f4b0-443e-9bca-7f8447711739" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
