@@ -50,9 +50,10 @@ After that, Windows will trust the signature of the `MSIX` package.
 After installing the certificate:
 
 1. Download the appropriate `MSIX` package from the project release.
-2. Open the `*.msix` file.
-3. In the Windows installer window, click `Install`.
-4. Wait for the installation to finish and launch the application from the Start menu.
+2. If the release also contains a `Dependencies` folder and Windows reports missing app dependencies, install the required dependency packages from that folder first.
+3. Open the `*.msix` file.
+4. In the Windows installer window, click `Install`.
+5. Wait for the installation to finish and launch the application from the Start menu.
 
 If Windows reports that the publisher is not trusted, it means the certificate was not installed or was installed into the wrong certificate store.
 
