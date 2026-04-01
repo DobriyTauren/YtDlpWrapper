@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml.Navigation;
 using System;
 using System.Threading.Tasks;
 using YtDlpWrapper.Models;
+using YtDlpWrapper.Services;
 using YtDlpWrapper.ViewModels;
 
 namespace YtDlpWrapper.Views
@@ -27,7 +28,7 @@ namespace YtDlpWrapper.Views
         {
             var dialog = new ContentDialog
             {
-                Title = "Ошибка загрузки",
+                Title = LocalizationService.GetString("DownloadErrorDialog_Title"),
                 Content = new ScrollViewer
                 {
                     Content = new TextBlock
@@ -36,13 +37,15 @@ namespace YtDlpWrapper.Views
                         TextWrapping = TextWrapping.Wrap
                     }
                 },
-                CloseButtonText = failure.CanUpdateYtDlp ? "Отмена" : "ОК",
+                CloseButtonText = failure.CanUpdateYtDlp
+                    ? LocalizationService.GetString("Common_Cancel")
+                    : LocalizationService.GetString("Common_Ok"),
                 XamlRoot = this.XamlRoot
             };
 
             if (failure.CanUpdateYtDlp)
             {
-                dialog.PrimaryButtonText = "Обновить yt-dlp";
+                dialog.PrimaryButtonText = LocalizationService.GetString("DownloadErrorDialog_UpdateButton");
             }
 
             var result = await dialog.ShowAsync();
@@ -63,11 +66,13 @@ namespace YtDlpWrapper.Views
             try
             {
                 await _vm.UpdateYtDlpAsync();
-                await ShowInfoDialogAsync("yt-dlp обновлён", "yt-dlp успешно обновлён. Попробуйте запустить загрузку ещё раз.");
+                await ShowInfoDialogAsync(
+                    LocalizationService.GetString("YtDlpUpdated_Title"),
+                    LocalizationService.GetString("YtDlpUpdated_Message"));
             }
             catch (Exception ex)
             {
-                await ShowInfoDialogAsync("Не удалось обновить yt-dlp", ex.Message);
+                await ShowInfoDialogAsync(LocalizationService.GetString("YtDlpUpdateFailed_Title"), ex.Message);
             }
         }
 
@@ -84,7 +89,7 @@ namespace YtDlpWrapper.Views
                         TextWrapping = TextWrapping.Wrap
                     }
                 },
-                CloseButtonText = "ОК",
+                CloseButtonText = LocalizationService.GetString("Common_Ok"),
                 XamlRoot = this.XamlRoot
             };
 

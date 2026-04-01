@@ -31,7 +31,7 @@
 
                 <StackPanel Spacing="20">
                     <TextBox
-                        PlaceholderText="Вставьте ссылку на видео"
+                        x:Uid="DownloadUrlTextBox"
                         Text="{Binding CurrentDownload.Url, Mode=TwoWay}"
                         Padding="12,10,0,10"
                         VerticalContentAlignment="Center"
@@ -45,7 +45,7 @@
 
                         <Grid Grid.Column="0">
                             <Button
-                                Content="Видео"
+                                x:Uid="VideoSelectedButton"
                                 Height="40"
                                 CornerRadius="10"
                                 HorizontalAlignment="Stretch"
@@ -55,7 +55,7 @@
                                 Visibility="{Binding IsVideo, Converter={StaticResource BoolToVisibilityConverter}}"/>
 
                             <Button
-                                Content="Видео"
+                                x:Uid="VideoUnselectedButton"
                                 Height="40"
                                 CornerRadius="10"
                                 HorizontalAlignment="Stretch"
@@ -67,7 +67,7 @@
 
                         <Grid Grid.Column="1">
                             <Button
-                                Content="Аудио"
+                                x:Uid="AudioSelectedButton"
                                 Height="40"
                                 CornerRadius="10"
                                 HorizontalAlignment="Stretch"
@@ -77,7 +77,7 @@
                                 Visibility="{Binding IsVideo, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
 
                             <Button
-                                Content="Аудио"
+                                x:Uid="AudioUnselectedButton"
                                 Height="40"
                                 CornerRadius="10"
                                 HorizontalAlignment="Stretch"
@@ -95,13 +95,13 @@
                         </Grid.ColumnDefinitions>
 
                         <ComboBox
-                            Header="Формат"
+                            x:Uid="FormatComboBox"
                             ItemsSource="{Binding Formats}"
                             SelectedItem="{Binding Format, Mode=TwoWay}"
                             Grid.Column="0"/>
 
                         <ComboBox
-                            Header="Качество"
+                            x:Uid="QualityComboBox"
                             ItemsSource="{Binding VideoQualities}"
                             SelectedItem="{Binding VideoQuality, Mode=TwoWay}"
                             Visibility="{Binding IsVideo, Converter={StaticResource BoolToVisibilityConverter}}"
@@ -115,7 +115,7 @@
                     </Grid>
 
                     <Button
-                        Content="Скачать"
+                        x:Uid="DownloadButton"
                         FontSize="16"
                         Height="44"
                         HorizontalAlignment="Stretch"
@@ -125,7 +125,7 @@
                         Visibility="{Binding CurrentDownload.IsDownloading, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
 
                     <Button
-                        Content="Отменить"
+                        x:Uid="CancelButton"
                         FontSize="16"
                         Height="44"
                         HorizontalAlignment="Stretch"
@@ -149,8 +149,8 @@
                             VerticalAlignment="Center"/>
 
                         <TextBlock
+                            x:Uid="YtDlpUpdateNoticeText"
                             Grid.Column="1"
-                            Text="Обновляем yt-dlp... Это может занять несколько секунд."
                             Opacity="0.8"
                             TextWrapping="Wrap"
                             VerticalAlignment="Center"/>

@@ -8,11 +8,15 @@ using System.Threading;
 using System.Threading.Tasks;
 using Windows.Storage;
 using YtDlpWrapper.Models;
+using YtDlpWrapper.Services;
 
 namespace YtDlpWrapper.Utils
 {
     public class YtDlpService
     {
+        private const int SoundCloudSocketTimeoutSeconds = 45;
+        private const int SoundCloudRetryCount = 5;
+
         private Process? _currentProcess;
 
         public async Task DownloadAsync(string url, DownloadType downloadType, string format, VideoQuality quality,
@@ -25,7 +29,7 @@ namespace YtDlpWrapper.Utils
             var existingPartFiles = CapturePartFiles(outputFolder);
 
             if (!File.Exists(ytDlpPath))
-                throw new FileNotFoundException("yt-dlp.exe не найден");
+                throw new FileNotFoundException(LocalizationService.GetString("Error_YtDlpExecutableMissing"));
 
             var arguments = BuildArguments(
                 url,
@@ -157,6 +161,15 @@ namespace YtDlpWrapper.Utils
                 args.Add("--extractor-args \"youtube:player-client=tv_embedded\"");
             }
 
+            if (IsSoundCloudUrl(url))
+            {
+                args.Add($"--socket-timeout {SoundCloudSocketTimeoutSeconds}");
+                args.Add($"--extractor-retries {SoundCloudRetryCount}");
+                args.Add($"--retries {SoundCloudRetryCount}");
+                args.Add("--retry-sleep extractor:2");
+                args.Add("--retry-sleep http:2");
+            }
+
             if (type == DownloadType.Audio)
             {
                 args.Add("-x");
@@ -207,7 +220,7 @@ namespace YtDlpWrapper.Utils
             {
                 var updateError = string.Join("\n", outputLines.Where(line => !string.IsNullOrWhiteSpace(line)));
                 throw new Exception(string.IsNullOrWhiteSpace(updateError)
-                    ? "Не удалось обновить yt-dlp."
+                    ? LocalizationService.GetString("Error_UpdateYtDlpFailed")
                     : updateError);
             }
         }
@@ -235,7 +248,7 @@ namespace YtDlpWrapper.Utils
         private string GetBundledToolsFolder()
         {
             var appFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)
-                ?? throw new DirectoryNotFoundException("Не удалось определить папку приложения.");
+                ?? throw new DirectoryNotFoundException(LocalizationService.GetString("Error_AppFolderNotFound"));
 
             return Path.Combine(appFolder, "yt-dlp");
         }
@@ -249,7 +262,7 @@ namespace YtDlpWrapper.Utils
 
             if (!File.Exists(sourcePath))
             {
-                throw new FileNotFoundException($"Не найден обязательный файл: {Path.GetFileName(sourcePath)}");
+                throw new FileNotFoundException(LocalizationService.Format("Error_RequiredFileMissing", Path.GetFileName(sourcePath)));
             }
 
             await using var sourceStream = new FileStream(sourcePath, FileMode.Open, FileAccess.Read, FileShare.Read);
@@ -327,17 +340,34 @@ namespace YtDlpWrapper.Utils
             if (IsOutdatedYtDlpError(errorText))
             {
                 throw new YtDlpUpdateRequiredException(
-                    "Похоже, встроенный yt-dlp устарел и больше не проходит проверку YouTube.\n\nОбновить yt-dlp сейчас?");
+                    LocalizationService.GetString("Error_BundledYtDlpOutdated"));
             }
 
             if (IsVpnBlockedYoutubeError(errorText))
             {
-                return "Загрузка недоступна: YouTube отклонил запрос. Приложение не поддерживает работу через VPN или прокси. Отключите VPN и попробуйте снова.";
+                return LocalizationService.GetString("Error_VpnBlockedYoutube");
+            }
+
+            if (IsSoundCloudFormatUnavailableError(errorText))
+            {
+                return LocalizationService.GetString("Error_SoundCloudFormatUnavailable");
+            }
+
+            if (IsRequestedFormatUnavailableError(errorText))
+            {
+                return LocalizationService.GetString("Error_FormatUnavailable");
+            }
+
+            if (IsNetworkTimeoutError(errorText))
+            {
+                return IsSoundCloudError(errorText)
+                    ? LocalizationService.GetString("Error_SoundCloudTimeout")
+                    : LocalizationService.GetString("Error_NetworkTimeout");
             }
 
             return string.IsNullOrWhiteSpace(errorText)
-                ? "Не удалось выполнить загрузку."
-                : errorText;
+                ? LocalizationService.GetString("Error_DownloadFailed")
+                : NormalizeRawErrorMessage(errorText);
         }
 
         private bool IsVpnBlockedYoutubeError(string errorText)
@@ -364,10 +394,76 @@ namespace YtDlpWrapper.Utils
                 || errorText.Contains("Watch on the latest version of YouTube", StringComparison.OrdinalIgnoreCase);
         }
 
+        private bool IsRequestedFormatUnavailableError(string errorText)
+        {
+            if (string.IsNullOrWhiteSpace(errorText))
+            {
+                return false;
+            }
+
+            return errorText.Contains("Requested format is not available", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private bool IsSoundCloudFormatUnavailableError(string errorText)
+        {
+            return IsSoundCloudError(errorText) && IsRequestedFormatUnavailableError(errorText);
+        }
+
+        private bool IsNetworkTimeoutError(string errorText)
+        {
+            if (string.IsNullOrWhiteSpace(errorText))
+            {
+                return false;
+            }
+
+            return errorText.Contains("Read timed out", StringComparison.OrdinalIgnoreCase)
+                || errorText.Contains("timed out", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private bool IsSoundCloudError(string errorText)
+        {
+            if (string.IsNullOrWhiteSpace(errorText))
+            {
+                return false;
+            }
+
+            return errorText.Contains("[soundcloud]", StringComparison.OrdinalIgnoreCase)
+                || errorText.Contains("soundcloud.com", StringComparison.OrdinalIgnoreCase)
+                || errorText.Contains("api.soundcloud.com", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private string NormalizeRawErrorMessage(string errorText)
+        {
+            var lines = errorText
+                .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(line => line.Trim())
+                .Where(line => !string.IsNullOrWhiteSpace(line))
+                .ToList();
+
+            if (lines.Count == 0)
+            {
+                return LocalizationService.GetString("Error_DownloadFailed");
+            }
+
+            if (lines[0].StartsWith("ERROR:", StringComparison.OrdinalIgnoreCase))
+            {
+                lines[0] = lines[0][6..].TrimStart();
+            }
+
+            return string.Join("\n", lines);
+        }
+
         private bool IsYoutubeUrl(string url)
         {
             return url.Contains("youtube.com", StringComparison.OrdinalIgnoreCase)
                 || url.Contains("youtu.be", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private bool IsSoundCloudUrl(string url)
+        {
+            return url.Contains("soundcloud.com", StringComparison.OrdinalIgnoreCase)
+                || url.Contains("snd.sc", StringComparison.OrdinalIgnoreCase)
+                || url.Contains("api.soundcloud.com", StringComparison.OrdinalIgnoreCase);
         }
 
         private string GetVideoFormatArg(string format, VideoQuality quality)

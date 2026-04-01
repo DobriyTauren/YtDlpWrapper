@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="DownloadUrlTextBox.PlaceholderText" xml:space="preserve">
+    <value>Вставьте ссылку на видео</value>
+  </data>
+  <data name="VideoSelectedButton.Content" xml:space="preserve">
+    <value>Видео</value>
+  </data>
+  <data name="VideoUnselectedButton.Content" xml:space="preserve">
+    <value>Видео</value>
+  </data>
+  <data name="AudioSelectedButton.Content" xml:space="preserve">
+    <value>Аудио</value>
+  </data>
+  <data name="AudioUnselectedButton.Content" xml:space="preserve">
+    <value>Аудио</value>
+  </data>
+  <data name="FormatComboBox.Header" xml:space="preserve">
+    <value>Формат</value>
+  </data>
+  <data name="QualityComboBox.Header" xml:space="preserve">
+    <value>Качество</value>
+  </data>
+  <data name="DownloadButton.Content" xml:space="preserve">
+    <value>Скачать</value>
+  </data>
+  <data name="CancelButton.Content" xml:space="preserve">
+    <value>Отменить</value>
+  </data>
+  <data name="YtDlpUpdateNoticeText.Text" xml:space="preserve">
+    <value>Обновляем yt-dlp... Это может занять несколько секунд.</value>
+  </data>
+  <data name="SettingsDownloadFolderTitle.Text" xml:space="preserve">
+    <value>Папка для сохранения файлов</value>
+  </data>
+  <data name="ChooseFolderButton.Content" xml:space="preserve">
+    <value>Изменить</value>
+  </data>
+  <data name="OpenFolderButton.Content" xml:space="preserve">
+    <value>Открыть папку</value>
+  </data>
+  <data name="Common_Ok" xml:space="preserve">
+    <value>ОК</value>
+  </data>
+  <data name="Common_Cancel" xml:space="preserve">
+    <value>Отмена</value>
+  </data>
+  <data name="DownloadErrorDialog_Title" xml:space="preserve">
+    <value>Ошибка загрузки</value>
+  </data>
+  <data name="DownloadErrorDialog_UpdateButton" xml:space="preserve">
+    <value>Обновить yt-dlp</value>
+  </data>
+  <data name="YtDlpUpdated_Title" xml:space="preserve">
+    <value>yt-dlp обновлён</value>
+  </data>
+  <data name="YtDlpUpdated_Message" xml:space="preserve">
+    <value>yt-dlp успешно обновлён. Попробуйте запустить загрузку ещё раз.</value>
+  </data>
+  <data name="YtDlpUpdateFailed_Title" xml:space="preserve">
+    <value>Не удалось обновить yt-dlp</value>
+  </data>
+  <data name="Validation_EnterValidLink" xml:space="preserve">
+    <value>Введите корректную ссылку.</value>
+  </data>
+  <data name="Validation_InvalidUrl" xml:space="preserve">
+    <value>Некорректный URL.</value>
+  </data>
+  <data name="Status_Ready" xml:space="preserve">
+    <value>Готово</value>
+  </data>
+  <data name="Status_Error" xml:space="preserve">
+    <value>Ошибка</value>
+  </data>
+  <data name="Status_Preparing" xml:space="preserve">
+    <value>Подготовка...</value>
+  </data>
+  <data name="Status_Cancelled" xml:space="preserve">
+    <value>Отменено</value>
+  </data>
+  <data name="Progress_PostProcessing" xml:space="preserve">
+    <value>Работает FFmpeg</value>
+  </data>
+  <data name="Progress_WithTotalSize" xml:space="preserve">
+    <value>{0} из {1}</value>
+  </data>
+  <data name="Progress_PlaylistWithCurrent" xml:space="preserve">
+    <value>{0} · {1}</value>
+  </data>
+  <data name="Unit_TiB" xml:space="preserve">
+    <value>ТБ</value>
+  </data>
+  <data name="Unit_GiB" xml:space="preserve">
+    <value>ГБ</value>
+  </data>
+  <data name="Unit_MiB" xml:space="preserve">
+    <value>МБ</value>
+  </data>
+  <data name="Unit_KiB" xml:space="preserve">
+    <value>КБ</value>
+  </data>
+  <data name="Unit_B" xml:space="preserve">
+    <value>Б</value>
+  </data>
+  <data name="Error_YtDlpExecutableMissing" xml:space="preserve">
+    <value>yt-dlp.exe не найден.</value>
+  </data>
+  <data name="Error_UpdateYtDlpFailed" xml:space="preserve">
+    <value>Не удалось обновить yt-dlp.</value>
+  </data>
+  <data name="Error_AppFolderNotFound" xml:space="preserve">
+    <value>Не удалось определить папку приложения.</value>
+  </data>
+  <data name="Error_RequiredFileMissing" xml:space="preserve">
+    <value>Не найден обязательный файл: {0}</value>
+  </data>
+  <data name="Error_BundledYtDlpOutdated" xml:space="preserve">
+    <value>Похоже, встроенный yt-dlp устарел и больше не проходит проверку YouTube.\n\nОбновить yt-dlp сейчас?</value>
+  </data>
+  <data name="Error_VpnBlockedYoutube" xml:space="preserve">
+    <value>Загрузка недоступна: YouTube отклонил запрос. Приложение не поддерживает работу через VPN или прокси. Отключите VPN и попробуйте снова.</value>
+  </data>
+  <data name="Error_DownloadFailed" xml:space="preserve">
+    <value>Не удалось выполнить загрузку.</value>
+  </data>
+  <data name="Error_FormatUnavailable" xml:space="preserve">
+    <value>Выбранный формат или качество недоступны для этой ссылки. Попробуйте другой формат или качество.</value>
+  </data>
+  <data name="Error_SoundCloudFormatUnavailable" xml:space="preserve">
+    <value>Выбранный видеоформат недоступен для этой ссылки SoundCloud. На SoundCloud обычно доступно только аудио. Переключитесь на режим «Аудио» и попробуйте снова.</value>
+  </data>
+  <data name="Error_NetworkTimeout" xml:space="preserve">
+    <value>Сайт отвечает слишком долго, и время ожидания истекло. Проверьте подключение к интернету и попробуйте ещё раз.</value>
+  </data>
+  <data name="Error_SoundCloudTimeout" xml:space="preserve">
+    <value>SoundCloud отвечает слишком долго, и время ожидания истекло. Попробуйте ещё раз чуть позже.</value>
+  </data>
+  <data name="VideoQuality_Best" xml:space="preserve">
+    <value>Лучшее</value>
+  </data>
+  <data name="VideoQuality_Q2160p" xml:space="preserve">
+    <value>2160p</value>
+  </data>
+  <data name="VideoQuality_Q1440p" xml:space="preserve">
+    <value>1440p</value>
+  </data>
+  <data name="VideoQuality_Q1080p" xml:space="preserve">
+    <value>1080p</value>
+  </data>
+  <data name="VideoQuality_Q720p" xml:space="preserve">
+    <value>720p</value>
+  </data>
+  <data name="VideoQuality_Q480p" xml:space="preserve">
+    <value>480p</value>
+  </data>
+</root>

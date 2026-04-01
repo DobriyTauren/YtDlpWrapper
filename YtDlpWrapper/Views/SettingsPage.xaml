@@ -17,8 +17,7 @@
                     Padding="24">
 
                     <StackPanel Spacing="12">
-                        <TextBlock
-                            Text="Папка для сохранения файлов"
+                        <TextBlock x:Uid="SettingsDownloadFolderTitle"
                             Foreground="{ThemeResource TextFillColorSecondary}"/>
 
                         <TextBox
@@ -26,14 +25,12 @@
                                 IsReadOnly="True"/>
 
                         <StackPanel Orientation="Horizontal" >
-                            <Button
-                                Content="Изменить"
+                            <Button x:Uid="ChooseFolderButton"
                                 Command="{Binding ChooseFolderCommand}"
                                 Grid.Column="1"/>
 
-                            <Button 
+                            <Button x:Uid="OpenFolderButton"
                                 Margin="12,0,0,0"
-                                Content="Открыть папку"
                                 Command="{Binding OpenFolderCommand}"
                                 Grid.Column="1"/>
                         </StackPanel>

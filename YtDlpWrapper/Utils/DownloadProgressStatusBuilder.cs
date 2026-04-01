@@ -1,5 +1,6 @@
 ﻿using System.Globalization;
 using System.Text.RegularExpressions;
+using YtDlpWrapper.Services;
 
 namespace YtDlpWrapper.Utils
 {
@@ -10,7 +11,7 @@ namespace YtDlpWrapper.Utils
         public static string Build(DownloadProgressInfo progress)
         {
             var currentItemText = progress.IsPostProcessing
-                ? "Работает FFmpeg"
+                ? LocalizationService.GetString("Progress_PostProcessing")
                 : BuildItemStatus(progress.ItemPercent, progress.Text);
 
             if (!progress.IsPlaylist || !progress.PlaylistItemIndex.HasValue || !progress.PlaylistItemCount.HasValue)
@@ -21,7 +22,7 @@ namespace YtDlpWrapper.Utils
             var playlistText = $"{progress.PlaylistItemIndex.Value}/{progress.PlaylistItemCount.Value}";
             return string.IsNullOrWhiteSpace(currentItemText)
                 ? playlistText
-                : $"{playlistText} · {currentItemText}";
+                : LocalizationService.Format("Progress_PlaylistWithCurrent", playlistText, currentItemText);
         }
 
         private static string BuildItemStatus(double percent, string? ytDlpLine)
@@ -31,7 +32,7 @@ namespace YtDlpWrapper.Utils
 
             return string.IsNullOrWhiteSpace(totalSize)
                 ? percentText
-                : $"{percentText} из {totalSize}";
+                : LocalizationService.Format("Progress_WithTotalSize", percentText, totalSize);
         }
 
         private static string? TryGetTotalSize(string? ytDlpLine)
@@ -48,17 +49,18 @@ namespace YtDlpWrapper.Utils
             }
 
             var sizeValue = double.Parse(sizeMatch.Groups["size"].Value, CultureInfo.InvariantCulture);
-            var sizeUnit = sizeMatch.Groups["unit"].Value switch
+            var sizeUnitToken = sizeMatch.Groups["unit"].Value;
+            var sizeUnit = sizeUnitToken switch
             {
-                "TiB" => "ТБ",
-                "GiB" => "ГБ",
-                "MiB" => "МБ",
-                "KiB" => "КБ",
-                "B" => "Б",
-                _ => sizeMatch.Groups["unit"].Value
+                "TiB" => LocalizationService.GetString("Unit_TiB"),
+                "GiB" => LocalizationService.GetString("Unit_GiB"),
+                "MiB" => LocalizationService.GetString("Unit_MiB"),
+                "KiB" => LocalizationService.GetString("Unit_KiB"),
+                "B" => LocalizationService.GetString("Unit_B"),
+                _ => sizeUnitToken
             };
 
-            var numberFormat = sizeValue >= 100 || sizeUnit == "Б" ? "0" : sizeValue >= 10 ? "0.#" : "0.##";
+            var numberFormat = sizeValue >= 100 || sizeUnitToken == "B" ? "0" : sizeValue >= 10 ? "0.#" : "0.##";
             var formattedValue = sizeValue.ToString(numberFormat, CultureInfo.CurrentCulture);
 
             return $"{formattedValue} {sizeUnit}";

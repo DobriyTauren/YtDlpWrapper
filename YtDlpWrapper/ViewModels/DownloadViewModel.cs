@@ -117,13 +117,13 @@ namespace YtDlpWrapper.ViewModels
 
             if (string.IsNullOrWhiteSpace(cleanUrl))
             {
-                DownloadFailed?.Invoke(new DownloadFailureInfo("Введите корректную ссылку."));
+                DownloadFailed?.Invoke(new DownloadFailureInfo(LocalizationService.GetString("Validation_EnterValidLink")));
                 return;
             }
 
             if (!System.Uri.TryCreate(cleanUrl, UriKind.Absolute, out var uri) || (uri.Scheme != "http" && uri.Scheme != "https"))
             {
-                DownloadFailed?.Invoke(new DownloadFailureInfo("Некорректный URL."));
+                DownloadFailed?.Invoke(new DownloadFailureInfo(LocalizationService.GetString("Validation_InvalidUrl")));
                 return;
             }
 
@@ -175,7 +175,7 @@ namespace YtDlpWrapper.ViewModels
                     }
 
                     CurrentDownload.Progress = 100;
-                    CurrentDownload.Status = "Готово";
+                    CurrentDownload.Status = LocalizationService.GetString("Status_Ready");
                     CurrentDownload.IsDownloading = false;
                 });
             }
@@ -193,7 +193,7 @@ namespace YtDlpWrapper.ViewModels
                     return;
                 }
 
-                CurrentDownload.Status = "Ошибка";
+                CurrentDownload.Status = LocalizationService.GetString("Status_Error");
                 DownloadFailed?.Invoke(new DownloadFailureInfo(ex.Message, canUpdateYtDlp: true));
             }
             catch (System.Exception ex)
@@ -203,7 +203,7 @@ namespace YtDlpWrapper.ViewModels
                     return;
                 }
 
-                CurrentDownload.Status = "Ошибка";
+                CurrentDownload.Status = LocalizationService.GetString("Status_Error");
                 DownloadFailed?.Invoke(new DownloadFailureInfo(ex.Message));
             }
             finally
@@ -230,13 +230,13 @@ namespace YtDlpWrapper.ViewModels
         private void BeginDownload()
         {
             CurrentDownload.Progress = 0;
-            CurrentDownload.Status = "Подготовка…";
+            CurrentDownload.Status = LocalizationService.GetString("Status_Preparing");
             CurrentDownload.IsDownloading = true;
         }
 
         private void SetCancelledState()
         {
-            CurrentDownload.Status = "Отменено";
+            CurrentDownload.Status = LocalizationService.GetString("Status_Cancelled");
             CurrentDownload.IsDownloading = false;
             CurrentDownload.Progress = 0;
         }
