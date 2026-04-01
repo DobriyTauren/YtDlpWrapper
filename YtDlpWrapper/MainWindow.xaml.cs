@@ -1,6 +1,8 @@
 using Microsoft.UI;
+using Microsoft.UI.Composition.SystemBackdrops;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Media;
 using System;
 using System.IO;
 using Windows.UI;
@@ -36,6 +38,8 @@ namespace YtDlpWrapper
             var windowId = Win32Interop.GetWindowIdFromWindow(hwnd);
             _appWindow = AppWindow.GetFromWindowId(windowId);
 
+            ApplySystemBackdrop();
+
             var iconPath = Path.Combine(AppContext.BaseDirectory, "Assets", "icon.ico");
             if (File.Exists(iconPath))
             {
@@ -55,7 +59,7 @@ namespace YtDlpWrapper
 
             }
 
-            if (_appWindow.TitleBar != null)
+            if (AppWindowTitleBar.IsCustomizationSupported() && _appWindow.TitleBar != null)
             {
                 var tb = _appWindow.TitleBar;
 
@@ -74,6 +78,26 @@ namespace YtDlpWrapper
                 tb.ButtonHoverBackgroundColor = Color.FromArgb(255, 60, 60, 60);
                 tb.ButtonPressedBackgroundColor = Color.FromArgb(255, 80, 80, 80);
             }
+        }
+
+        private void ApplySystemBackdrop()
+        {
+            try
+            {
+                if (DesktopAcrylicController.IsSupported())
+                {
+                    SystemBackdrop = new DesktopAcrylicBackdrop();
+                    RootGrid.Background = null;
+                    return;
+                }
+            }
+            catch
+            {
+                SystemBackdrop = null;
+            }
+
+            // Windows 10 fallback: keep a stable opaque background when acrylic is unavailable.
+            RootGrid.Background = new SolidColorBrush(Color.FromArgb(255, 32, 32, 32));
         }
 
         private void MainWindow_Closed(object sender, WindowEventArgs args)
