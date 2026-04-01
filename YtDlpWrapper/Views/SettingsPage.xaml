@@ -10,7 +10,6 @@
                 MaxWidth="550"
                 HorizontalAlignment="Stretch">
                 
-                <!-- CARD: Download folder -->
                 <Border
                     Background="{ThemeResource CardBackgroundFillColorDefault}"
                     CornerRadius="20"

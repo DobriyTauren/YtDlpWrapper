@@ -96,7 +96,7 @@ namespace YtDlpWrapper
                 SystemBackdrop = null;
             }
 
-            // Windows 10 fallback: keep a stable opaque background when acrylic is unavailable.
+            // Windows 10 fallback
             RootGrid.Background = new SolidColorBrush(Color.FromArgb(255, 32, 32, 32));
         }
 

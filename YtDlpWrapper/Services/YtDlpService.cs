@@ -114,10 +114,7 @@ namespace YtDlpWrapper.Utils
                     existingFiles.Add(file);
                 }
             }
-            catch
-            {
-                // Не мешаем основному сценарию загрузки, если не удалось снять снимок директории.
-            }
+            catch { }
 
             return existingFiles;
         }
@@ -139,10 +136,7 @@ namespace YtDlpWrapper.Utils
                     }
                 }
             }
-            catch
-            {
-                // Отмена не должна ломаться из-за неудачной очистки временных файлов.
-            }
+            catch { }
         }
 
         private string BuildArguments(string url, DownloadType type, string format, VideoQuality quality, bool downloadPlaylist, string toolsFolder, string outputFolder)
@@ -478,7 +472,6 @@ namespace YtDlpWrapper.Utils
                 _ => null
             };
 
-            // ===== MP4 =====
             if (format.Equals("mp4", StringComparison.OrdinalIgnoreCase))
             {
                 if (height == null)
@@ -487,7 +480,6 @@ namespace YtDlpWrapper.Utils
                 return $"-f \"bv*[ext=mp4][height<={height}]+ba[ext=m4a]/b[ext=mp4]\"";
             }
 
-            // ===== WEBM =====
             if (format.Equals("webm", StringComparison.OrdinalIgnoreCase))
             {
                 if (height == null)
@@ -496,7 +488,6 @@ namespace YtDlpWrapper.Utils
                 return $"-f \"bv*[ext=webm][height<={height}]+ba[acodec=opus]/b\"";
             }
 
-            // ===== MKV =====
             if (format.Equals("mkv", StringComparison.OrdinalIgnoreCase))
             {
                 return "-f \"bv*+ba/b\"";

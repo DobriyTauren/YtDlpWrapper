@@ -150,7 +150,7 @@ namespace YtDlpWrapper.ViewModels
                             return;
                         }
 
-                        // ⚠️ UI thread
+                        // UI thread
                         App.MainWindow.DispatcherQueue.TryEnqueue(() =>
                         {
                             if (!IsCurrentOperation(operationId) || cts.IsCancellationRequested)
